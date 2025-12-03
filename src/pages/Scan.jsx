@@ -15,6 +15,7 @@ export default function Scan() {
 
   const [isActive, setIsActive] = useState(false);
   const [message, setMessage] = useState("");
+  
 
   // Lance ou stoppe le scanner
   useEffect(() => {
@@ -86,8 +87,10 @@ export default function Scan() {
             userId: auth.currentUser.uid,
             email: auth.currentUser.email,
             sessionId,
+            courseName: session.courseName || null,
             timestamp: serverTimestamp(),
           });
+
 
           await addPoints(auth.currentUser.uid, 1, "presence", sessionId);
           setMessage("✔ Présence enregistrée ! (+1 point)");
