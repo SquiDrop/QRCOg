@@ -57,3 +57,23 @@ export async function createStudentIfNotExists(user) {
     );
   }
 }
+
+import { doc, updateDoc, increment, collection, addDoc, serverTimestamp } from "firebase/firestore";
+
+export async function addPoints(userId, amount, reason, sessionId = null) {
+  // 1) Ajouter l’historique de points
+  await addDoc(collection(db, "points"), {
+    userId,
+    amount,
+    reason,
+    sessionId,
+    timestamp: serverTimestamp(),
+  });
+
+  // 2) Incrémenter le total dans students
+  const studentRef = doc(db, "students", userId);
+
+  await updateDoc(studentRef, {
+    totalPoints: increment(amount),
+  });
+}

@@ -14,6 +14,7 @@ export default function Scan() {
   const [isActive, setIsActive] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Lance ou stoppe le scanner
   useEffect(() => {
     if (!isActive) return;
 
@@ -22,15 +23,14 @@ export default function Scan() {
     scannerRef.current = new QrScanner(
       videoRef.current,
       async (result) => {
-
-        // Stop après un scan
+        // Dès qu'un QR est lu → stop caméra
         scannerRef.current.stop();
         setIsActive(false);
         setMessage("QR détecté, vérification…");
 
         let data;
         try {
-          data = JSON.parse(result.data);
+          data = JSON.parse(result.data); // QR officiel = JSON
         } catch {
           setMessage("❌ QR invalide !");
           return;
@@ -54,13 +54,13 @@ export default function Scan() {
 
           const session = sessionSnap.data();
 
-          // 2️⃣ Token correct ?
+          // 2️⃣ Token valide ?
           if (session.token !== token) {
             setMessage("❌ QR falsifié !");
             return;
           }
 
-          // 3️⃣ QR expiré ?
+          // 3️⃣ Vérifier expiration
           if (Date.now() > session.expiresAt) {
             setMessage("⏳ QR expiré !");
             return;
@@ -79,7 +79,7 @@ export default function Scan() {
             return;
           }
 
-          // 5️⃣ OK → enregistrement
+          // 5️⃣ Enregistrement
           await addDoc(collection(db, "scans"), {
             userId: auth.currentUser.uid,
             email: auth.currentUser.email,
@@ -90,7 +90,7 @@ export default function Scan() {
           setMessage("✔ Présence enregistrée !");
         } catch (err) {
           console.error(err);
-          setMessage("Erreur ❌");
+          setMessage("Erreur lors de la vérification ❌");
         }
       },
       { returnDetailedScanResult: true }
@@ -118,10 +118,13 @@ export default function Scan() {
       {/* Message */}
       <p style={{ marginTop: 20, fontSize: 18 }}>{message}</p>
 
-      {/* Boutons */}
+      {/* Bouton principal */}
       {!isActive && (
         <button
-          onClick={() => setIsActive(true)}
+          onClick={() => {
+            setMessage("");
+            setIsActive(true);
+          }}
           style={{ padding: "10px 20px", marginRight: 10 }}
         >
           🎥 Activer le scanner
@@ -135,21 +138,13 @@ export default function Scan() {
             setIsActive(false);
             setMessage("Scanner arrêté.");
           }}
-          style={{ padding: "10px 20px", marginRight: 10, backgroundColor: "#555", color: "white" }}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#555",
+            color: "white",
+          }}
         >
           ✋ Arrêter le scanner
-        </button>
-      )}
-
-      {!isActive && (
-        <button
-          onClick={() => {
-            setMessage("");
-            setIsActive(true); // relance le scan
-          }}
-          style={{ padding: "10px 20px" }}
-        >
-          🔄 Réessayer
         </button>
       )}
     </div>
