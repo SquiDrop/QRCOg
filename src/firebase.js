@@ -8,6 +8,18 @@ import {
   signOut 
 } from "firebase/auth";
 
+// === FIRESTORE IMPORT (unique et complet) ===
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  increment,
+  collection,
+  addDoc
+} from "firebase/firestore";
+
 // === CONFIG FIREBASE ===
 const firebaseConfig = {
   apiKey: "AIzaSyA8OOzjSyKlNX-1OT8cSyus6PIe_bpZ52o",
@@ -31,7 +43,6 @@ export const loginWithGoogle = () => signInWithPopup(auth, provider);
 export const logout = () => signOut(auth);
 
 // Gestion étudiant : création si inexistant
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export async function createStudentIfNotExists(user) {
   const ref = doc(db, "students", user.uid);
@@ -58,7 +69,6 @@ export async function createStudentIfNotExists(user) {
   }
 }
 
-import { doc, updateDoc, increment, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export async function addPoints(userId, amount, reason, sessionId = null) {
   // 1) Ajouter l’historique de points

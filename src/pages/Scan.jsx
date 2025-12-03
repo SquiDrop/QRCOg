@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import QrScanner from "qr-scanner";
 import { db, auth } from "../firebase";
-import { 
+import {
   collection, addDoc, serverTimestamp,
   query, where, getDocs,
   doc, getDoc
 } from "firebase/firestore";
+import { addPoints } from "../firebase";
+
 
 export default function Scan() {
   const videoRef = useRef(null);
@@ -87,7 +89,8 @@ export default function Scan() {
             timestamp: serverTimestamp(),
           });
 
-          setMessage("✔ Présence enregistrée !");
+          await addPoints(auth.currentUser.uid, 1, "presence", sessionId);
+          setMessage("✔ Présence enregistrée ! (+1 point)");
         } catch (err) {
           console.error(err);
           setMessage("Erreur lors de la vérification ❌");
