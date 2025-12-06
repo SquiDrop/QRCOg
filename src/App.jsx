@@ -1,42 +1,64 @@
 import { useEffect, useState } from "react";
-import { auth, logout } from "./firebase";
-import { createStudentIfNotExists } from "./firebase";
+import { auth, logout, createStudentIfNotExists } from "./firebase";
 import Login from "./pages/Login";
 import Scan from "./pages/Scan";
 import AdminCreateSession from "./pages/AdminCreateSession";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminLeaderboard from "./pages/AdminLeaderboard";
+import AdminCreateQuiz from "./pages/AdminCreateQuiz";
+import Games from "./pages/Games";
+import PlayQuiz from "./pages/PlayQuiz";
+import Layout from "./Layout";
 
-import { doc, onSnapshot } from "firebase/firestore";
+import { Routes, Route } from "react-router-dom";
 import { db } from "./firebase";
+import { collection, doc, onSnapshot, query, where, getDocs } from "firebase/firestore";
 
 function App() {
   const [user, setUser] = useState(null);
   const [points, setPoints] = useState(0);
   const [mode, setMode] = useState("home");
-  // modes possibles : "home", "scan", "admin"
+  const [hasNewQuiz, setHasNewQuiz] = useState(false);
 
-  // 1️⃣ On écoute l'état d'auth
-  useEffect(() => {
-    return auth.onAuthStateChanged((u) => setUser(u));
-  }, []);
+  useEffect(() => auth.onAuthStateChanged((u) => setUser(u)), []);
 
-  // 2️⃣ On crée l'élève s'il n'existe pas déjà
   useEffect(() => {
-    if (user) {
-      createStudentIfNotExists(user);
-    }
+    if (user) createStudentIfNotExists(user);
   }, [user]);
 
-  // 3️⃣ On écoute EN TEMPS RÉEL les points de l'étudiant dans Firestore
+  // Points en temps réel
   useEffect(() => {
     if (!user) return;
 
     const ref = doc(db, "students", user.uid);
-
     const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        setPoints(snap.data().totalPoints || 0);
-      }
+      if (snap.exists()) setPoints(snap.data().totalPoints || 0);
+    });
+
+    return () => unsub();
+  }, [user]);
+
+  // Détection quiz non fait
+  useEffect(() => {
+    if (!user) return;
+
+    const unsub = onSnapshot(collection(db, "quizzes"), async (snapshot) => {
+      const now = Date.now();
+
+      const allQuizzes = snapshot.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((q) => q.expiresAt > now);
+
+      const respSnap = await getDocs(
+        query(
+          collection(db, "quizResponses"),
+          where("userId", "==", user.uid)
+        )
+      );
+
+      const answered = respSnap.docs.map((d) => d.data().quizId);
+
+      setHasNewQuiz(allQuizzes.some((q) => !answered.includes(q.id)));
     });
 
     return () => unsub();
@@ -45,75 +67,63 @@ function App() {
   if (!user) return <Login />;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Bienvenue {user.displayName} 👋</h1>
-      <p>{user.email}</p>
+    <Layout>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <h1>Bienvenue {user.displayName} 👋</h1>
+              <p>{user.email}</p>
 
-      {/* Affichage des points */}
-      <p style={{ fontSize: "20px", fontWeight: "bold" }}>
-        Points totaux : {points} ⭐
-      </p>
+              <p style={{ fontSize: "20px", fontWeight: "bold" }}>
+                Points totaux : {points} ⭐
+              </p>
 
-      {/* Boutons du haut */}
-      <div style={{ marginBottom: "20px" }}>
-        {/* Scanner */}
-        <button
-          onClick={() => setMode("scan")}
-          style={{ padding: "10px 20px", marginRight: "15px" }}
-        >
-          Scanner un QR
-        </button>
+              <div style={{ marginBottom: 20 }}>
+                <button onClick={() => setMode("scan")} style={{ marginRight: 10 }}>
+                  Scanner un QR
+                </button>
 
-        {/* Mode Admin : création QR */}
-        <button
-          onClick={() => setMode("admin")}
-          style={{ padding: "10px 20px", marginRight: "15px" }}
-        >
-          Mode Admin
-        </button>
+                <button
+                  onClick={() => setMode("games")}
+                  className="notif-button"
+                  style={{ marginRight: 10 }}
+                >
+                  Jeux
+                  {hasNewQuiz && <span className="notif-badge">1</span>}
+                </button>
 
-        {/* Tableau de bord */}
-        <button
-          onClick={() => setMode("dashboard")}
-          style={{ padding: "10px 20px", marginRight: "15px" }}
-        >
-          Tableau de bord
-        </button>
+                <button onClick={() => setMode("admin")} style={{ marginRight: 10 }}>
+                  Mode Admin
+                </button>
 
-        {/* Déconnexion */}
-        <button
-          onClick={logout}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#e74c3c",
-            color: "white",
-          }}
-        >
-          Se déconnecter
-        </button>
-      </div>
+                <button onClick={logout} className="danger">
+                  Se déconnecter
+                </button>
+              </div>
 
-
-      {/* Pages */}
-      {mode === "scan" && (
-        <div style={{ marginTop: "30px" }}>
-          <Scan />
-        </div>
-      )}
-
-      {mode === "admin" && (
-        <div style={{ marginTop: "30px" }}>
-          <AdminCreateSession />
-        </div>
-      )}
-
-      {mode === "dashboard" && (
-        <div style={{ marginTop: "30px" }}>
-          <AdminDashboard />
-        </div>
-      )}
-
-    </div>
+              {mode === "scan" && <Scan />}
+              {mode === "games" && (
+                <Games clearNotification={() => setHasNewQuiz(false)} />
+              )}
+              {mode === "admin" && (
+                <>
+                  <AdminCreateSession />
+                  <hr style={{ margin: "30px 0" }} />
+                  <AdminCreateQuiz />
+                  <hr style={{ margin: "30px 0" }} />
+                  <AdminDashboard />
+                  <hr style={{ margin: "30px 0" }} />
+                  <AdminLeaderboard />
+                </>
+              )}
+            </>
+          }
+        />
+        <Route path="/quiz/:quizId" element={<PlayQuiz />} />
+      </Routes>
+    </Layout>
   );
 }
 

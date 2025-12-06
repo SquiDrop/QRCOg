@@ -49,11 +49,13 @@ export default function AdminCreateSession() {
       <h2>Créer un QR de cours</h2>
 
       <input
+        className="input-wide"
         type="text"
         placeholder="Nom du cours (ex: Physio)"
         value={courseName}
         onChange={(e) => setCourseName(e.target.value)}
       />
+
 
       <button onClick={createSession}>Créer le QR</button>
 

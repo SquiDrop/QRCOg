@@ -23,15 +23,7 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div
-      style={{
-        marginTop: 30,
-        padding: 20,
-        borderRadius: 12,
-        backgroundColor: "#111",
-        color: "#f5f5f5",
-      }}
-    >
+    <div className="panel">
       <h2>Tableau de bord - Présences</h2>
       <p>{scans.length} scans enregistrés</p>
 
