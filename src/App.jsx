@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { auth, logout, createStudentIfNotExists } from "./firebase";
+import { auth, logout, createStudentIfNotExists, loginApproved, db } from "./firebase";
 import Login from "./pages/Login";
 import Scan from "./pages/Scan";
 import AdminCreateSession from "./pages/AdminCreateSession";
@@ -11,7 +11,6 @@ import PlayQuiz from "./pages/PlayQuiz";
 import Layout from "./Layout";
 
 import { Routes, Route } from "react-router-dom";
-import { db } from "./firebase";
 import { collection, doc, onSnapshot, query, where, getDocs } from "firebase/firestore";
 
 function App() {
@@ -64,7 +63,7 @@ function App() {
     return () => unsub();
   }, [user]);
 
-  if (!user) return <Login />;
+  if (!user || !loginApproved) return <Login />;
 
   return (
     <Layout>
