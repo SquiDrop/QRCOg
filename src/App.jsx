@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { auth, logout, createStudentIfNotExists, loginApproved, db } from "./firebase";
+import { auth, logout, createStudentIfNotExists, loginApproved, db, isAdmin } from "./firebase";
 import Login from "./pages/Login";
 import Scan from "./pages/Scan";
 import AdminCreateSession from "./pages/AdminCreateSession";
@@ -93,9 +93,12 @@ function App() {
                   {hasNewQuiz && <span className="notif-badge">1</span>}
                 </button>
 
-                <button onClick={() => setMode("admin")} style={{ marginRight: 10 }}>
-                  Mode Admin
-                </button>
+                {isAdmin && (
+                  <button onClick={() => setMode("admin")} style={{ marginRight: 10 }}>
+                    Mode Admin
+                  </button>
+                )}
+
 
                 <button onClick={logout} className="danger">
                   Se déconnecter

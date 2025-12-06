@@ -40,7 +40,7 @@ export const provider = new GoogleAuthProvider();
 // === admin list ===
 export const ADMIN_EMAILS = [
   "lex@ensc.fr",
-  "prenom.nom@ensc.fr"
+  ""
 ];
 
 export let loginApproved = false;
