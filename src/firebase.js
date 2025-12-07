@@ -39,8 +39,8 @@ export const provider = new GoogleAuthProvider();
 
 // === admin list ===
 export const ADMIN_EMAILS = [
-  "lex@ensc.fr",
-  ""
+  "almarot@ensc.fr",
+  "prof@ensc.fr"
 ];
 
 export let loginApproved = false;
